@@ -149,3 +149,4 @@ See [docs/architecture.md](docs/architecture.md) for details.
 ## Troubleshooting
 
 Refer to [docs/troubleshooting.md](docs/troubleshooting.md) for solutions to common issues.
+# employee-management-aws
