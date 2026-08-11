@@ -1,7 +1,11 @@
+# Express frontend Deployment.
+# - Reads PORT and API_BASE_URL from the frontend-config ConfigMap
+# - Probes hit the root page "/"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: employee-frontend
+  namespace: employee-system
   labels:
     app: employee-frontend
 spec:
@@ -20,11 +24,9 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
-          env:
-            - name: PORT
-              value: "3000"
-            - name: API_BASE_URL
-              value: "http://employee-backend:5000"
+          envFrom:
+            - configMapRef:
+                name: frontend-config
           resources:
             requests:
               cpu: 100m

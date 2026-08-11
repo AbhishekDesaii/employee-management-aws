@@ -1,7 +1,9 @@
+# ClusterIP Service: exposes the Express frontend to other pods inside the cluster.
 apiVersion: v1
 kind: Service
 metadata:
   name: employee-frontend
+  namespace: employee-system
   labels:
     app: employee-frontend
 spec:

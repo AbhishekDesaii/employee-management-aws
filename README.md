@@ -1,8 +1,6 @@
 # Employee Management
 
-[![CI/CD](https://github.com/example/employee-management/actions/workflows/deploy.yml/badge.svg)](https://github.com/example/employee-management/actions/workflows/deploy.yml)
-
-A full-stack employee management application with a React frontend, Python REST API, and Docker-based deployment to AWS.
+A full-stack employee management application with an **Express (EJS) frontend**, a **Flask REST API** backend, and deployments via **Docker Compose**, **Kubernetes (Minikube)**, and **Terraform (AWS)**.
 
 ---
 
@@ -10,12 +8,12 @@ A full-stack employee management application with a React frontend, Python REST 
 
 | Category       | Technology                      |
 | -------------- | ------------------------------- |
-| **Frontend**   | React, TypeScript, Vite          |
-| **Backend**    | Python 3.11, Flask, Gunicorn     |
-| **Proxy**      | NGINX                           |
-| **Container**  | Docker & Docker Compose          |
-| **CI/CD**      | GitHub Actions                   |
-| **Cloud**      | AWS (ECR, ECS Fargate, EC2)      |
+| **Frontend**   | Express, EJS, Bootstrap         |
+| **Backend**    | Python, Flask, Gunicorn         |
+| **Container**  | Docker                          |
+| **Orchestration** | Kubernetes (Minikube + kustomize) |
+| **CI/CD**      | GitHub Actions                  |
+| **Cloud**      | AWS (Terraform)                 |
 
 ---
 
@@ -23,42 +21,52 @@ A full-stack employee management application with a React frontend, Python REST 
 
 ```
 employee-management/
-├── .github/workflows/deploy.yml   # CI/CD pipeline
+├── .github/workflows/deploy.yml   # CI pipeline (test + build)
 ├── backend/
-│   ├── Dockerfile
-│   ├── app.py                     # Flask API
-│   ├── requirements.txt
-│   └── .env.example
+│   ├── Dockerfile                 # Flask API image
+│   ├── app.py                     # Flask app factory
+│   ├── routes.py                  # API route handlers
+│   ├── models.py                  # In-memory data layer
+│   ├── config.py                  # Config from env vars
+│   └── requirements.txt
 ├── frontend/
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── src/
-│   └── .env.example
-├── nginx/
-│   └── default.conf
-├── scripts/
-│   ├── setup.sh                   # Local dev setup
-│   ├── deploy_ec2.sh              # EC2 deployment
-│   ├── deploy_ecs.sh              # ECS deployment
-│   └── stop_services.sh           # Tear down
-├── docs/
-│   ├── architecture.md
-│   └── troubleshooting.md
+│   ├── Dockerfile                 # Express image
+│   ├── server.js                  # Express server
+│   ├── routes/index.js            # Page routes
+│   └── views/                     # EJS templates
+├── k8s/                           # Kubernetes manifests (kustomize)
+│   ├── kustomization.yaml
+│   ├── namespace.yaml
+│   ├── configmap.yaml             # non-secret config
+│   ├── secret.yaml                # secret values (base64)
+│   ├── pvc.yaml                   # backend storage claim
+│   ├── backend-deployment.yaml
+│   ├── backend-service.yaml
+│   ├── frontend-deployment.yaml
+│   ├── frontend-service.yaml
+│   └── ingress.yaml
+├── docker/nginx/nginx.conf        # reverse proxy (docker-compose)
 ├── docker-compose.yml
-├── .env.example
+├── scripts/
+│   ├── setup.sh                   # Docker Compose setup
+│   ├── deploy_minikube.sh         # build + deploy to Minikube
+│   ├── deploy_ec2.sh              # EC2 deploy reference
+│   ├── deploy_ecs.sh              # ECS deploy reference
+│   └── stop_services.sh           # docker compose down
+├── terraform/                     # AWS deployments (3 parts)
 └── README.md
 ```
 
 ---
 
-## Quick Start (Docker)
+## Quick Start (Docker Compose)
 
 **Prerequisites:** Docker, Docker Compose
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/example/employee-management.git
-cd employee-management
+git clone git@github.com:AbhishekDesaii/employee-management-aws.git
+cd employee-management-aws
 
 # 2. Run setup
 chmod +x scripts/setup.sh && ./scripts/setup.sh
@@ -75,70 +83,148 @@ To stop all services:
 
 ---
 
+## Kubernetes (Minikube) Deployment
+
+This is the primary deliverable of the assignment: the app is deployed to a local
+Kubernetes cluster (Minikube) using manifests managed by **kustomize**.
+
+### 1. Install & start Minikube
+
+```bash
+# Install Minikube (Linux example)
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+# Start the cluster (uses the Docker driver)
+minikube start --driver=docker
+
+# Enable the nginx ingress controller
+minikube addons enable ingress
+```
+
+### 2. Deploy the application
+
+Everything is automated in one script:
+
+```bash
+./scripts/deploy_minikube.sh
+```
+
+The script does the following:
+
+1. Confirms Minikube is running (and enables the `ingress` addon if needed).
+2. Builds the `employee-backend:latest` and `employee-frontend:latest` images
+   directly inside the Minikube Docker daemon.
+3. Applies all Kubernetes manifests with `kubectl apply -k k8s/` (kustomize).
+4. Waits for the pods to become ready.
+5. Verifies the backend health endpoint and the frontend page through the ingress.
+
+### 3. Browse the app
+
+```bash
+minikube ip                        # prints the cluster IP, e.g. 192.168.49.2
+echo "<minikube-ip> employee.local" | sudo tee -a /etc/hosts
+open http://employee.local
+```
+
+### 4. Verify the deployment
+
+```bash
+# Cluster status
+minikube status
+
+# Workloads
+kubectl -n employee-system get pods,deployments,services,pvc
+
+# Ingress
+kubectl -n employee-system get ingress
+
+# Backend health through the ingress
+curl -H "Host: employee.local" http://$(minikube ip)/api/health
+
+# Logs
+kubectl -n employee-system logs deploy/employee-backend
+kubectl -n employee-system logs deploy/employee-frontend
+```
+
+### 5. Clean up
+
+```bash
+kubectl delete -k k8s/             # remove the workloads
+minikube stop                      # stop the VM/container
+minikube delete                    # delete the cluster entirely
+```
+
+### What the manifests demonstrate
+
+| Manifest | Purpose |
+| -------- | ------- |
+| `namespace.yaml` | Isolates the app in the `employee-system` namespace |
+| `configmap.yaml` | Non-secret config (ports, workers, API URL) |
+| `secret.yaml` | `SECRET_KEY` stored as a Secret (base64), not hardcoded |
+| `pvc.yaml` | 1 Gi PersistentVolumeClaim for backend storage |
+| `backend-deployment.yaml` | Flask API (2 replicas) using the Secret, ConfigMap, and PVC |
+| `frontend-deployment.yaml` | Express app using the ConfigMap (backend URL) |
+| `ingress.yaml` | NGINX ingress routing `employee.local` to both services |
+
+---
+
 ## Environment Variables
 
-| Variable            | Default        | Description                         |
-| ------------------- | -------------- | ----------------------------------- |
-| `FLASK_ENV`         | `development`  | Flask environment mode              |
-| `FLASK_DEBUG`       | `1`            | Enable Flask debug mode             |
-| `BACKEND_PORT`      | `5000`         | Backend container port              |
-| `FRONTEND_PORT`     | `3000`         | Frontend dev server port            |
-| `NGINX_PORT`        | `80`           | Public-facing NGINX port            |
-
-Copy `.env.example` to `.env` to override defaults.
+| Variable          | Where used      | Description                  |
+| ----------------- | --------------- | ---------------------------- |
+| `PORT`            | backend/frontend | Port the server listens on  |
+| `HOST`            | backend         | Bind address for gunicorn    |
+| `SECRET_KEY`      | backend         | Flask secret (from Secret)   |
+| `API_BASE_URL`    | frontend        | Backend URL used by Express  |
+| `GUNICORN_WORKERS`| backend         | Number of gunicorn workers   |
 
 ---
 
 ## API Endpoints
 
-| Method | Endpoint               | Description             |
-| ------ | ---------------------- | ----------------------- |
-| GET    | `/api/health`          | Health check            |
-| GET    | `/api/employees`       | List all employees      |
-| GET    | `/api/employees/:id`   | Get employee by ID      |
-| POST   | `/api/employees`       | Create an employee      |
-| PUT    | `/api/employees/:id`   | Update an employee      |
-| DELETE | `/api/employees/:id`   | Delete an employee      |
+| Method | Endpoint             | Description             |
+| ------ | -------------------- | ----------------------- |
+| GET    | `/api/health`        | Health check            |
+| GET    | `/api/employees`     | List all employees      |
+| GET    | `/api/employees/:id` | Get employee by ID      |
+| POST   | `/api/employees`     | Create an employee      |
+| PUT    | `/api/employees/:id` | Update an employee      |
+| DELETE | `/api/employees/:id` | Delete an employee      |
+| GET    | `/api/departments`   | List departments        |
+| GET    | `/api/projects`      | List projects           |
+| GET    | `/api/stats`         | Dashboard statistics    |
 
 ---
 
 ## Deployment Options
 
-### Terraform (recommended — see [terraform/](terraform/README.md))
+### Docker Compose (local)
 
-Three independent Terraform configurations deploy Flask + Express to AWS:
+```bash
+./scripts/setup.sh
+```
 
-| Part | Configuration                                             | Directory               |
-| ---- | --------------------------------------------------------- | ----------------------- |
-| 1    | Flask + Express on a **single EC2** instance              | `terraform/part1-single-ec2/` |
-| 2    | Flask + Express on **two separate EC2** instances         | `terraform/part2-separate-ec2/` |
-| 3    | Flask + Express as **Docker containers** (ECR + ECS + ALB) | `terraform/part3-ecs/` |
+### Kubernetes / Minikube (local)
+
+```bash
+./scripts/deploy_minikube.sh
+```
+
+### AWS (Terraform)
+
+See [terraform/](terraform/README.md) for three configurations that deploy the
+app to AWS:
+
+| Part | Configuration                                              | Directory                |
+| ---- | ---------------------------------------------------------- | ------------------------ |
+| 1    | Flask + Express on a single EC2 instance                   | `terraform/part1-single-ec2/` |
+| 2    | Flask + Express on two separate EC2 instances              | `terraform/part2-separate-ec2/` |
+| 3    | Flask + Express as Docker containers (ECR + ECS + ALB)     | `terraform/part3-ecs/` |
 
 ```bash
 cd terraform/part1-single-ec2   # or part2-separate-ec2 / part3-ecs
 terraform init && terraform plan && terraform apply -auto-approve
-```
-
-### EC2 (single-instance)
-
-```bash
-sudo ./scripts/deploy_ec2.sh
-```
-
-The script installs Docker, clones the repo, and runs `docker compose up --build -d`.
-
-### ECS (Fargate — production)
-
-Push to the `main` branch triggers the GitHub Actions pipeline:
-
-1. **Test** — Python backend and Node frontend checks
-2. **Build & Push** — Docker images to Amazon ECR
-3. **Deploy** — Force-update the ECS service
-
-For manual deployment:
-
-```bash
-./scripts/deploy_ecs.sh
 ```
 
 ---
@@ -147,21 +233,15 @@ For manual deployment:
 
 ```mermaid
 graph TD
-    User-->Nginx[NGINX :80]
-    Nginx-->Frontend[Frontend :3000]
-    Nginx-->Backend[Backend API :5000]
+    User-->Ingress[NGINX Ingress :80]
+    Ingress-->FrontendSvc[frontend-service :3000]
+    Ingress-->BackendSvc[backend-service :5000]
+    FrontendSvc-->Frontend[Express Frontend]
+    BackendSvc-->Backend[Flask API]
+    Backend-->PVC[(Persistent Volume)]
     Backend-->InMemoryDB[(In-Memory DB)]
 ```
 
 NGINX routes requests on port 80:
 - `/api/*` → backend (port 5000)
 - everything else → frontend (port 3000)
-
-See [docs/architecture.md](docs/architecture.md) for details.
-
----
-
-## Troubleshooting
-
-Refer to [docs/troubleshooting.md](docs/troubleshooting.md) for solutions to common issues.
-# employee-management-aws

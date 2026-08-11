@@ -1,25 +1,24 @@
-FROM python:3.12-slim-bookworm AS builder
+# Backend Dockerfile
+#
+# Single-stage build: Python 3.12 image with the Flask app + gunicorn.
+# Runs as a non-root user and listens on port 5000.
+#
+# Build:
+#   docker build -t employee-backend .  (from the backend/ directory)
+
+FROM python:3.12-slim
 
 WORKDIR /app
+
+# Install the Python dependencies listed in requirements.txt
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-FROM python:3.12-slim-bookworm
-
-RUN groupadd -r app && useradd -r -g app -d /app -s /bin/false app
-
-WORKDIR /app
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# Copy the rest of the backend source code
 COPY . .
 
-RUN chown -R app:app /app
-
-USER app
-
+# Expose the port gunicorn listens on
 EXPOSE 5000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')"
-
+# Start gunicorn with 2 workers
 CMD ["gunicorn", "app:create_app()", "-c", "gunicorn.conf.py"]

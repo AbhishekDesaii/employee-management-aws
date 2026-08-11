@@ -1,74 +1,52 @@
-version: "3.9"
-
-networks:
-  employee-network:
-    driver: bridge
+# Local development with Docker Compose.
+#
+# Three services mirror the architecture I used:
+#   backend  - Flask API on :5000
+#   frontend - Express app on :3000
+#   nginx    - reverse proxy on :80 (routes /api/* to backend, rest to frontend)
+#
+# The frontend talks to the backend using the service name "backend" (Docker
+# DNS), so no hardcoded IPs are needed.
 
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: employee-backend
-    restart: unless-stopped
     ports:
       - "5000:5000"
     environment:
-      - FLASK_DEBUG=false
-      - SECRET_KEY=prod-secret-key-change-me
-      - HOST=0.0.0.0
-      - PORT=5000
-      - CORS_ORIGINS=*
-      - LOG_LEVEL=INFO
-      - GUNICORN_WORKERS=2
+      HOST: 0.0.0.0
+      PORT: 5000
+      SECRET_KEY: dev-secret
+      CORS_ORIGINS: "*"
+      GUNICORN_WORKERS: 2
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')"]
-      interval: 30s
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 15s
-    networks:
-      - employee-network
+      start_period: 5s
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: employee-frontend
-    restart: unless-stopped
     ports:
-      - "3002:3000"
+      - "3000:3000"
     environment:
-      - PORT=3000
-      - API_BASE_URL=http://backend:5000
+      PORT: 3000
+      # Reach the backend through Docker's internal DNS
+      API_BASE_URL: "http://backend:5000"
     depends_on:
-      backend:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
-    networks:
-      - employee-network
+      - backend
 
   nginx:
     image: nginx:1.27-alpine
-    container_name: employee-nginx
-    restart: unless-stopped
     ports:
-      - "8082:80"
+      - "8080:80"
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - frontend
       - backend
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    networks:
-      - employee-network
+      - frontend

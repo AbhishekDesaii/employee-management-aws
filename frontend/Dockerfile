@@ -1,24 +1,24 @@
-FROM node:22-alpine AS builder
+# Frontend Dockerfile
+#
+# Single-stage build: Node 20 alpine image with the Express app.
+# Listens on port 3000.
+#
+# Build:
+#   docker build -t employee-frontend .  (from the frontend/ directory)
+
+FROM node:20-alpine
 
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm install --omit=dev && npm cache clean --force
 
-FROM node:22-alpine
+# Install npm dependencies (dev deps are not needed at runtime)
+COPY package.json ./
+RUN npm install --omit=dev
 
-RUN addgroup -S app && adduser -S app -G app
-
-WORKDIR /app
-COPY --from=builder /app/node_modules ./node_modules
+# Copy the Express server and view files
 COPY . .
 
-RUN chown -R app:app /app
-
-USER app
-
+# Expose the port the Express server listens on
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
-
+# Start the server
 CMD ["node", "server.js"]

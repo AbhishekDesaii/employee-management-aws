@@ -1,7 +1,13 @@
+# Flask backend Deployment.
+# - Reads env config from the backend-config ConfigMap
+# - Reads SECRET_KEY from the backend-secret Secret
+# - Mounts the backend-data PVC at /data
+# - Readiness + liveness probes hit the /api/health endpoint
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: employee-backend
+  namespace: employee-system
   labels:
     app: employee-backend
 spec:
@@ -20,21 +26,18 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: backend-config
           env:
-            - name: FLASK_DEBUG
-              value: "false"
             - name: SECRET_KEY
-              value: "prod-secret-key-change-me"
-            - name: HOST
-              value: "0.0.0.0"
-            - name: PORT
-              value: "5000"
-            - name: CORS_ORIGINS
-              value: "*"
-            - name: LOG_LEVEL
-              value: "INFO"
-            - name: GUNICORN_WORKERS
-              value: "2"
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: SECRET_KEY
+          volumeMounts:
+            - name: data
+              mountPath: /data
           resources:
             requests:
               cpu: 100m
@@ -54,3 +57,7 @@ spec:
               port: 5000
             initialDelaySeconds: 15
             periodSeconds: 20
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: backend-data

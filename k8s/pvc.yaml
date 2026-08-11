@@ -1,0 +1,15 @@
+# PersistentVolumeClaim: requests durable storage for the backend.
+# On Minikube the default storage class provisions a hostPath volume
+# automatically. The backend keeps an in-memory database, so this volume is
+# mounted as scratch space to demonstrate persistent-volume wiring.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backend-data
+  namespace: employee-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

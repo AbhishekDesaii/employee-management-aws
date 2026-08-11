@@ -1,50 +1,32 @@
 from datetime import datetime
-from threading import Lock
 
 
 class InMemoryDB:
-    _instance = None
-    _lock = Lock()
+    """
+    A very simple in-memory store.
+    A module-level instance is created once at import time and shared by all
+    the Flask request handlers, so we don't need a fancy singleton class.
+    """
 
-    def __new__(cls):
-        if cls._instance is None:
-            with cls._lock:
-                if cls._instance is None:
-                    cls._instance = super().__new__(cls)
-                    cls._instance._init_db()
-        return cls._instance
-
-    def _init_db(self):
-        self._employee_id_counter = 4
+    def __init__(self):
+        self._next_id = 4
         self.employees = {
             1: {
-                "id": 1,
-                "name": "Alice Johnson",
-                "email": "alice@example.com",
-                "phone": "+1-555-0101",
-                "department": "Engineering",
-                "designation": "Senior Engineer",
-                "salary": 95000.00,
+                "id": 1, "name": "Alice Johnson", "email": "alice@example.com",
+                "phone": "+1-555-0101", "department": "Engineering",
+                "designation": "Senior Engineer", "salary": 95000.00,
                 "created_at": "2025-01-15T10:00:00Z",
             },
             2: {
-                "id": 2,
-                "name": "Bob Smith",
-                "email": "bob@example.com",
-                "phone": "+1-555-0102",
-                "department": "Marketing",
-                "designation": "Marketing Lead",
-                "salary": 85000.00,
+                "id": 2, "name": "Bob Smith", "email": "bob@example.com",
+                "phone": "+1-555-0102", "department": "Marketing",
+                "designation": "Marketing Lead", "salary": 85000.00,
                 "created_at": "2025-02-20T10:00:00Z",
             },
             3: {
-                "id": 3,
-                "name": "Carol Williams",
-                "email": "carol@example.com",
-                "phone": "+1-555-0103",
-                "department": "Human Resources",
-                "designation": "HR Manager",
-                "salary": 78000.00,
+                "id": 3, "name": "Carol Williams", "email": "carol@example.com",
+                "phone": "+1-555-0103", "department": "Human Resources",
+                "designation": "HR Manager", "salary": 78000.00,
                 "created_at": "2025-03-10T10:00:00Z",
             },
         }
@@ -66,10 +48,7 @@ class InMemoryDB:
              "team_size": 4, "budget": 180000.00},
         ]
 
-    def _next_id(self):
-        with self._lock:
-            self._employee_id_counter += 1
-            return self._employee_id_counter
+    # ---------------- employees ----------------
 
     def get_all_employees(self):
         return list(self.employees.values())
@@ -78,7 +57,8 @@ class InMemoryDB:
         return self.employees.get(emp_id)
 
     def add_employee(self, data):
-        emp_id = self._next_id()
+        emp_id = self._next_id
+        self._next_id += 1
         employee = {
             "id": emp_id,
             "name": data.get("name"),
@@ -90,40 +70,39 @@ class InMemoryDB:
             "created_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
         self.employees[emp_id] = employee
-        self._update_department_count(employee["department"], 1)
+        self._bump_department(employee["department"], +1)
         return employee
 
     def update_employee(self, emp_id, data):
         employee = self.employees.get(emp_id)
-        if employee is None:
+        if not employee:
             return None
+
         old_dept = employee["department"]
-        for field in ("name", "email", "phone", "department",
-                      "designation", "salary"):
-            if field in data and data[field] is not None:
-                if field == "salary":
-                    employee[field] = float(data[field])
-                else:
-                    employee[field] = data[field]
-        new_dept = employee["department"]
-        if old_dept != new_dept:
-            self._update_department_count(old_dept, -1)
-            self._update_department_count(new_dept, 1)
+        for field in ("name", "email", "phone", "department", "designation"):
+            if data.get(field) is not None:
+                employee[field] = data[field]
+        if data.get("salary") is not None:
+            employee["salary"] = float(data["salary"])
+
+        if employee["department"] != old_dept:
+            self._bump_department(old_dept, -1)
+            self._bump_department(employee["department"], +1)
         return employee
 
     def delete_employee(self, emp_id):
         employee = self.employees.pop(emp_id, None)
         if employee:
-            self._update_department_count(employee["department"], -1)
+            self._bump_department(employee["department"], -1)
         return employee
 
-    def _update_department_count(self, dept_name, delta):
+    # ---------------- helpers / read-only endpoints ----------------
+
+    def _bump_department(self, dept_name, delta):
         for dept in self.departments:
             if dept["name"] == dept_name:
-                dept["employee_count"] = max(
-                    0, dept["employee_count"] + delta
-                )
-                break
+                dept["employee_count"] = max(0, dept["employee_count"] + delta)
+                return
 
     def get_departments(self):
         return self.departments
@@ -139,7 +118,8 @@ class InMemoryDB:
             "total_departments": len(self.departments),
             "total_projects": len(self.projects),
             "total_salary": round(total_salary, 2),
-            "avg_salary": round(
-                total_salary / len(employees), 2
-            ) if employees else 0,
+            "avg_salary": round(total_salary / len(employees), 2) if employees else 0,
         }
+
+
+db = InMemoryDB()
