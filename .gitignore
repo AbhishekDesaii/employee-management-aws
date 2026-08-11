@@ -1,0 +1,28 @@
+# Terraform
+terraform/**/.terraform/
+terraform/**/.terraform.lock.hcl
+terraform/**/*.tfstate
+terraform/**/*.tfstate.*
+terraform/**/terraform.tfvars
+terraform/**/*.plan
+
+# AWS
+.aws/
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Env files
+.env
+.env.local
+
+# OS
+.DS_Store
+
+# Logs
+*.log

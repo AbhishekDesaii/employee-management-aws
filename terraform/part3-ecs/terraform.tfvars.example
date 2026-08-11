@@ -1,0 +1,16 @@
+# Copy to terraform.tfvars and adjust as needed.
+aws_region = "us-east-1"
+name_prefix = "employee"
+
+vpc_cidr = "10.0.0.0/16"
+azs      = ["us-east-1a", "us-east-1b"]
+
+image_tag = "latest"
+
+backend_cpu  = 256
+backend_memory  = 512
+frontend_cpu = 256
+frontend_memory = 512
+
+backend_desired_count  = 1
+frontend_desired_count = 1

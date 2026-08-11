@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: employee-frontend
+  labels:
+    app: employee-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: employee-frontend
+  template:
+    metadata:
+      labels:
+        app: employee-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: employee-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            - name: API_BASE_URL
+              value: "http://employee-backend:5000"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20

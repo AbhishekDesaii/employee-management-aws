@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: employee-backend
+  labels:
+    app: employee-backend
+spec:
+  type: ClusterIP
+  selector:
+    app: employee-backend
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP

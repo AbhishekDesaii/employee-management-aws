@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: employee-backend
+  labels:
+    app: employee-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: employee-backend
+  template:
+    metadata:
+      labels:
+        app: employee-backend
+    spec:
+      containers:
+        - name: backend
+          image: employee-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: FLASK_DEBUG
+              value: "false"
+            - name: SECRET_KEY
+              value: "prod-secret-key-change-me"
+            - name: HOST
+              value: "0.0.0.0"
+            - name: PORT
+              value: "5000"
+            - name: CORS_ORIGINS
+              value: "*"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: GUNICORN_WORKERS
+              value: "2"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 20

@@ -104,6 +104,21 @@ Copy `.env.example` to `.env` to override defaults.
 
 ## Deployment Options
 
+### Terraform (recommended — see [terraform/](terraform/README.md))
+
+Three independent Terraform configurations deploy Flask + Express to AWS:
+
+| Part | Configuration                                             | Directory               |
+| ---- | --------------------------------------------------------- | ----------------------- |
+| 1    | Flask + Express on a **single EC2** instance              | `terraform/part1-single-ec2/` |
+| 2    | Flask + Express on **two separate EC2** instances         | `terraform/part2-separate-ec2/` |
+| 3    | Flask + Express as **Docker containers** (ECR + ECS + ALB) | `terraform/part3-ecs/` |
+
+```bash
+cd terraform/part1-single-ec2   # or part2-separate-ec2 / part3-ecs
+terraform init && terraform plan && terraform apply -auto-approve
+```
+
 ### EC2 (single-instance)
 
 ```bash

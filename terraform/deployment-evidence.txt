@@ -1,0 +1,8 @@
+=== PART 1 EVIDENCE ===
+Instance: i-05060927c9ba2db4b  Public IP: 44.199.169.53
+Flask URL: http://44.199.169.53:5000  Express URL: http://44.199.169.53:3000
+--- Health check:
+{"service":"employee-management-api","status":"healthy","version":"1.0.0"}
+
+--- Frontend page title:
+<title>Home - Employee Management</title>
