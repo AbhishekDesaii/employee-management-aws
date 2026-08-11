@@ -6,3 +6,31 @@ Flask URL: http://44.199.169.53:5000  Express URL: http://44.199.169.53:3000
 
 --- Frontend page title:
 <title>Home - Employee Management</title>
+
+=== PART 2 EVIDENCE ===
+VPC: vpc-0c2877fe38ef4d30f | Public subnet: subnet-0606494c04c46c631
+Backend: i-0c8661713587c0167 | Public IP 98.87.78.92 | Private IP 10.0.0.204 | URL http://98.87.78.92:5000
+Frontend: i-001a6f526a62586fa | Public IP 52.1.164.110 | URL http://52.1.164.110:3000
+Backend health:
+{"service":"employee-management-api","status":"healthy","version":"1.0.0"}
+
+Frontend dashboard (cross-instance via private IP 10.0.0.204:5000):
+<title>Dashboard - Employee Management</title>
+Frontend->backend direct private IP test:
+{"service":"employee-management-api","status":"healthy","version":"1.0.0"}
+
+
+=== PART 3 EVIDENCE ===
+ALB DNS: employee-alb-965088500.us-east-1.elb.amazonaws.com
+App URL: http://employee-alb-965088500.us-east-1.elb.amazonaws.com  |  API URL: http://employee-alb-965088500.us-east-1.elb.amazonaws.com/api/health
+ECR backend: 883765745699.dkr.ecr.us-east-1.amazonaws.com/employee-backend:latest
+ECR frontend: 883765745699.dkr.ecr.us-east-1.amazonaws.com/employee-frontend:latest
+ECS cluster: employee-cluster (Fargate)
+--- ALB frontend page:
+<title>Home - Employee Management</title>
+--- ALB API health:
+{"service":"employee-management-api","status":"healthy","version":"1.0.0"}
+
+--- ALB create+list (full loop):
+create HTTP 201
+3 employees
