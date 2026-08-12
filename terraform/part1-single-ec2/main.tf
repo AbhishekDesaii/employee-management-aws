@@ -114,6 +114,7 @@ resource "aws_instance" "this" {
     github_token    = var.github_token
     app_dir         = var.app_dir
     api_base_url    = "http://localhost:5000"
+    secret_key      = var.secret_key
   })
 
   root_block_device {

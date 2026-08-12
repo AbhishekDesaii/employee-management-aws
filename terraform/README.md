@@ -26,17 +26,28 @@ aws configure
 
 ## Remote State Management (S3)
 
-Each part uses a commented S3 backend (`backend.tf`). To enable remote state
-with locking:
+Each part uses a **live S3 backend** (`backend.tf`) for remote state with
+DynamoDB locking. The bucket and lock table are created once by:
 
-1. Bootstrap the bucket + DynamoDB lock table once:
+```bash
+./terraform/state/bootstrap.sh
+```
 
-   ```bash
-   ./terraform/state/bootstrap.sh
-   ```
+This creates:
+- S3 bucket `employee-management-tfstate-<account-id>` (versioning + SSE)
+- DynamoDB table `terraform-locks` (PAY_PER_REQUEST)
 
-2. Uncomment the `backend "s3" {}` block in the part's `backend.tf`.
-3. Run `terraform init` (with `-migrate-state` if local state already exists).
+No manual uncommenting is needed - the `backend "s3" {}` blocks are active.
+A separate state key is used per part:
+
+| Part | State key |
+| ---- | --------- |
+| 1    | `part1-single-ec2/terraform.tfstate` |
+| 2    | `part2-separate-ec2/terraform.tfstate` |
+| 3    | `part3-ecs/terraform.tfstate` |
+
+> Note: if you used local state previously, run `terraform init -migrate-state`
+> once to upload the existing state.
 
 ---
 
@@ -157,17 +168,26 @@ curl http://<alb-dns>/api/health
 
 ## Validation
 
-All configurations were validated with:
+All configurations were validated and **applied against live AWS**:
 
 ```bash
 terraform init -backend=false
 terraform validate
 terraform fmt -recursive -check
+terraform apply -auto-approve   # Executed for Part 1 (4), Part 2 (5), Part 3 (39 resources)
 ```
 
-Output: **"Success! The configuration is valid."** for all three parts.
-`terraform plan` was also verified to parse and build the full resource graph
-(before AWS credential authentication).
+- Part 1 apply output: `Apply complete! Resources: 4 added` (instance
+  `i-066109e4c5ce0cb0b`, EIP `34.225.219.173`)
+- Part 2 apply output: `Apply complete! Resources: 5 added` (VPC
+  `vpc-023ea767052b744a6`, backend `i-0441a2bd56c947e40` `54.145.187.40`,
+  frontend `i-041a6cba9d228a72e`)
+- Part 3 apply output: `Apply complete! Resources: 39 added` (ALB
+  `employee-alb-1009930769.us-east-1.elb.amazonaws.com`)
+
+Raw `terraform apply` logs and screenshots are in
+[`docs/evidence/`](../docs/evidence/), and a summary of every verified
+endpoint is in [`deployment-evidence.txt`](deployment-evidence.txt).
 
 ---
 

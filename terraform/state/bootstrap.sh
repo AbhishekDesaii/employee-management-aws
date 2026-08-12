@@ -7,7 +7,8 @@ set -euo pipefail
 # Run once before the first `terraform init`.
 # -----------------------------------------------------------------------------
 
-BUCKET="${BUCKET:-employee-management-tfstate}"
+ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+BUCKET="${BUCKET:-employee-management-tfstate-$ACCOUNT_ID}"
 REGION="${AWS_REGION:-us-east-1}"
 TABLE="terraform-locks"
 

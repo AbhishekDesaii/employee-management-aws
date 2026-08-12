@@ -45,7 +45,7 @@ resource "aws_ecs_task_definition" "backend" {
         { name = "HOST", value = "0.0.0.0" },
         { name = "PORT", value = "5000" },
         { name = "FLASK_DEBUG", value = "false" },
-        { name = "SECRET_KEY", value = "prod-secret-key-change-me" },
+        { name = "SECRET_KEY", value = var.secret_key == "" ? random_password.flask_secret[0].result : var.secret_key },
         { name = "CORS_ORIGINS", value = "*" },
         { name = "LOG_LEVEL", value = "INFO" },
         { name = "GUNICORN_WORKERS", value = "2" },

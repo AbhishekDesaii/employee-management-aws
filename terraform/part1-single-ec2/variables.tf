@@ -62,6 +62,12 @@ variable "github_token" {
   default     = ""
 }
 
+variable "secret_key" {
+  description = "Flask SECRET_KEY (override for production; generated if empty)"
+  type        = string
+  default     = ""
+}
+
 variable "app_dir" {
   description = "Directory where the app will be cloned on the instance"
   type        = string

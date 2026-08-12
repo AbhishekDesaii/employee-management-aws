@@ -1,8 +1,0 @@
-# Namespace to keep all employee-app resources in one place.
-# Using a dedicated namespace avoids mixing with other workloads on the cluster.
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: employee-system
-  labels:
-    app: employee-management

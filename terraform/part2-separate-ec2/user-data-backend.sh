@@ -10,6 +10,10 @@ export DEBIAN_FRONTEND=noninteractive
 APP_DIR="${app_dir}"
 REPO_URL="${github_repo_url}"
 TOKEN="${github_token}"
+SECRET_KEY="${secret_key}"
+if [ -z "$SECRET_KEY" ]; then
+  SECRET_KEY="$(openssl rand -hex 32)"
+fi
 
 if [ -n "$TOKEN" ]; then
   REPO_URL="https://x-access-token:$${TOKEN}@$${REPO_URL#https://}"
@@ -37,7 +41,7 @@ WorkingDirectory=$APP_DIR/backend
 Environment="HOST=0.0.0.0"
 Environment="PORT=5000"
 Environment="FLASK_DEBUG=false"
-Environment="SECRET_KEY=prod-secret-key-change-me"
+Environment="SECRET_KEY=$SECRET_KEY"
 Environment="CORS_ORIGINS=*"
 Environment="LOG_LEVEL=INFO"
 Environment="GUNICORN_WORKERS=2"

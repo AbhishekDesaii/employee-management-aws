@@ -11,6 +11,10 @@ APP_DIR="${app_dir}"
 REPO_URL="${github_repo_url}"
 TOKEN="${github_token}"
 API_BASE_URL="${api_base_url}"
+SECRET_KEY="${secret_key}"
+if [ -z "$SECRET_KEY" ]; then
+  SECRET_KEY="$(openssl rand -hex 32)"
+fi
 
 # Tokenized repo URL if a token is provided
 if [ -n "$TOKEN" ]; then
@@ -58,7 +62,7 @@ WorkingDirectory=$APP_DIR/backend
 Environment="HOST=0.0.0.0"
 Environment="PORT=5000"
 Environment="FLASK_DEBUG=false"
-Environment="SECRET_KEY=prod-secret-key-change-me"
+Environment="SECRET_KEY=$SECRET_KEY"
 Environment="CORS_ORIGINS=*"
 Environment="LOG_LEVEL=INFO"
 Environment="GUNICORN_WORKERS=2"

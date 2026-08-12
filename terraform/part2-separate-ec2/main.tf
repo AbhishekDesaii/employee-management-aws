@@ -183,6 +183,7 @@ resource "aws_instance" "backend" {
     github_repo_url = var.github_repo_url
     github_token    = var.github_token
     app_dir         = var.app_dir
+    secret_key      = var.secret_key
   })
 
   root_block_device {

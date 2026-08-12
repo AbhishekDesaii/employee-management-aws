@@ -4,7 +4,8 @@ const axios = require("axios");
 const router = express.Router();
 
 // Where the Flask API lives. Overridable with the API_BASE_URL env var
-// (set by docker-compose or Kubernetes), otherwise falls back to localhost.
+// (set through Terraform user-data or the ECS task definition), otherwise
+// falls back to localhost.
 function apiUrl(req) {
   return req.app.locals.apiBaseUrl || process.env.API_BASE_URL || "http://localhost:5000";
 }

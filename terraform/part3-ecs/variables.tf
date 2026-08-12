@@ -63,3 +63,9 @@ variable "frontend_desired_count" {
   type        = number
   default     = 1
 }
+
+variable "secret_key" {
+  description = "Flask SECRET_KEY (override for production; generated if empty)"
+  type        = string
+  default     = ""
+}

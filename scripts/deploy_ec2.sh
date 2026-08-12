@@ -2,10 +2,14 @@
 set -euo pipefail
 
 # deploy_ec2.sh
-# Simple helper that runs the app on an EC2 instance with Docker.
-# NOTE: the main assignment is Kubernetes/Minikube - use deploy_minikube.sh.
-# This script is kept for reference.
+# Reference helper for deploying to EC2.
+# The primary deployment method for this assignment is Terraform:
+#   cd terraform/part1-single-ec2 && terraform apply -auto-approve
+#   cd terraform/part2-separate-ec2 && terraform apply -auto-approve
+# This script is kept for reference only.
 
-echo "This script is kept for reference only."
-echo "For the main assignment, run: ./scripts/deploy_minikube.sh"
+echo "Use the Terraform configs under terraform/ instead:"
+echo "  terraform/part1-single-ec2  - single EC2 (Flask + Express)"
+echo "  terraform/part2-separate-ec2 - two separate EC2 instances"
+echo "  terraform/part3-ecs          - Docker (ECR + ECS + ALB)"
 exit 0

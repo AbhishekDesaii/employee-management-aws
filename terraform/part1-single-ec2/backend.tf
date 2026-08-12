@@ -1,12 +1,13 @@
 # -----------------------------------------------------------------------------
-# S3 backend for remote Terraform state (recommended).
-# Before `terraform apply`, create the bucket + DynamoDB table (see
-# state/bootstrap.sh) and uncomment this block. Then run `terraform init`.
+# S3 backend for remote Terraform state with locking.
+# The bucket + DynamoDB lock table are created by terraform/state/bootstrap.sh.
 # -----------------------------------------------------------------------------
-# backend "s3" {
-#   bucket         = "employee-management-tfstate"
-#   key            = "part1-single-ec2/terraform.tfstate"
-#   region         = "us-east-1"
-#   encrypt        = true
-#   dynamodb_table = "terraform-locks"
-# }
+terraform {
+  backend "s3" {
+    bucket         = "employee-management-tfstate-883765745699"
+    key            = "part1-single-ec2/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "terraform-locks"
+  }
+}
