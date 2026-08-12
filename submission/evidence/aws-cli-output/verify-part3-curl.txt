@@ -1,0 +1,20 @@
+LIVE VERIFICATION (curl) - PART 3: DOCKER ON ECR + ECS (Fargate) + ALB
+App     : http://employee-alb-1009930769.us-east-1.elb.amazonaws.com
+Run     : 2026-08-12T14:40:00Z
+
+$ curl -s http://employee-alb-1009930769.us-east-1.elb.amazonaws.com/api/health (ALB -> Flask :5000)
+{"status":"healthy"}
+
+
+$ curl -s http://employee-alb-1009930769.us-east-1.elb.amazonaws.com/ | grep title (ALB -> Express :3000)
+<title>Home - Employee Management</title>
+
+$ curl -s http://employee-alb-1009930769.us-east-1.elb.amazonaws.com/dashboard | grep -c 'Alice Johnson'
+1
+
+$ Create employee (POST) via ALB:
+{"created_at":"2026-08-12T14:40:02Z","department":"QA","designation":"Reviewer","email":"mentor@example.com","id":5,"name":"Mentor Review","phone":null,"salary":88000.0}
+
+
+$ List employees (GET) via ALB - count:
+total employees: 4

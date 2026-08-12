@@ -37,6 +37,8 @@ employee-management/
 │   ├── part2-separate-ec2/        # Flask + Express on two EC2
 │   ├── part3-ecs/                 # Docker (ECR + ECS + ALB)
 │   └── state/bootstrap.sh         # Creates S3 state backend
+├── ci-cd/jenkins/                 # Jenkins install + pipeline config
+├── scripts/split-repos.sh         # Publish separate backend/frontend repos
 └── README.md
 ```
 
@@ -52,6 +54,17 @@ three AWS configurations:
 | 1    | Flask + Express on a single EC2 instance                   | `terraform/part1-single-ec2/` |
 | 2    | Flask + Express on two separate EC2 instances              | `terraform/part2-separate-ec2/` |
 | 3    | Flask + Express as Docker containers (ECR + ECS + ALB)     | `terraform/part3-ecs/` |
+
+## CI/CD (Jenkins)
+
+A **Jenkins** pipeline automates deployment of the Flask backend and Express
+frontend to EC2, triggered by **GitHub webhooks**:
+
+- `backend/Jenkinsfile` + `frontend/Jenkinsfile` — the two pipelines
+- `ci-cd/jenkins/` — install + configure scripts for Jenkins, plugins, webhooks
+- `backend/deploy.sh` + `frontend/deploy.sh` — systemd deploy helpers
+- `scripts/split-repos.sh` — publishes the two standalone GitHub repos
+- [docs/cicd.md](docs/cicd.md) — full assignment write-up
 
 All three parts use an **S3 remote backend** (with DynamoDB locking) so Terraform
 state is shared and protected.

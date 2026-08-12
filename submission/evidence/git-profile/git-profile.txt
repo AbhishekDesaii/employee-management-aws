@@ -1,0 +1,45 @@
+GIT PROFILE & SUBMISSION AUTHORSHIP
+====================================
+Maintainer / Author:  MKanal2003
+Git name : MKanal2003
+Git email: mkanal2023@gmail.com
+Primary  : https://github.com/AbhishekDesaii/employee-management-aws
+
+----------------------------------------------------------------------
+GIT USER CONFIG (from: git config user.name / user.email)
+----------------------------------------------------------------------
+Name : MKanal2003
+Email: mkanal2023@gmail.com
+
+----------------------------------------------------------------------
+REMOTE REPOSITORY
+----------------------------------------------------------------------
+origin  git@github.com:AbhishekDesaii/employee-management-aws.git (fetch)
+origin  git@github.com:AbhishekDesaii/employee-management-aws.git (push)
+Branch : main  (latest commit pushed: 5d0ed96)
+
+----------------------------------------------------------------------
+COMMIT HISTORY (this submission - the AWS/Terraform pass)
+----------------------------------------------------------------------
+5d0ed96  MKanal2003 <mkanal2023@gmail.com>  2026-08-12
+         Align assignment to Terraform AWS: real apply evidence, S3 state,
+         security fixes, remove Kubernetes
+         - real terraform apply for Part 1 (4), Part 2 (5), Part 3 (39 resources)
+         - live S3 remote state backend + DynamoDB locking on all three parts
+         - removed Kubernetes/Minikube content (out of scope for this assignment)
+
+----------------------------------------------------------------------
+VERIFICATION OF THE COMMIT (git log --show-signature / --format)
+----------------------------------------------------------------------
+$ git log --oneline -3 --pretty=format:"%h %an <%ae> %ad %s" --date=short
+5d0ed96 MKanal2003 <mkanal2023@gmail.com> 2026-08-12 Align assignment to Terraform AWS: ...
+5380d3a MKanal2003 <mkanal2023@gmail.com> 2026-08-11 Address reviewer feedback: ...
+d5885d4 AbhishekDesaii <163825681+AbhishekDesaii@users.noreply.github.com> 2026-08-11 k8s proof
+
+----------------------------------------------------------------------
+WORKING TREE (what this submission contains, Terraform-only deliverables)
+----------------------------------------------------------------------
+backend/              Flask REST API (port 5000)
+frontend/             Express EJS frontend (port 3000)
+terraform/            AWS Terraform code, three deployment scenarios
+evidence/             Proof: AWS console views, apply output, screenshots

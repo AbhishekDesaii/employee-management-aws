@@ -1,0 +1,63 @@
+// -----------------------------------------------------------------------------
+// Jenkinsfile — Employee Management FRONTEND (Express)
+// Repo:     https://github.com/<owner>/employee-management-frontend
+// Trigger:  GitHub webhook on every push to main
+// Stages:   Checkout -> Install deps -> Test (node:test) -> Deploy -> Smoke test
+// -----------------------------------------------------------------------------
+pipeline {
+    agent any
+
+    environment {
+        APP_DIR      = "${env.APP_DIR ?: '/home/ubuntu/ems/frontend'}"
+        SERVICE      = "ems-frontend"
+        API_BASE_URL = "${env.API_BASE_URL ?: 'http://localhost:5000'}"
+    }
+
+    options {
+        timestamps()
+        timeout(time: 15, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install dependencies') {
+            steps {
+                sh 'cd ${WORKSPACE} && npm ci || npm install'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'cd ${WORKSPACE} && npm test'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                    export APP_DIR=${APP_DIR}
+                    export API_BASE_URL=${API_BASE_URL}
+                    export WORKSPACE=${WORKSPACE}
+                    bash ${WORKSPACE}/deploy.sh
+                '''
+            }
+        }
+
+        stage('Smoke test') {
+            steps {
+                sh 'curl -sf -o /dev/null http://localhost:3000/'
+            }
+        }
+    }
+
+    post {
+        success { echo "✅ FRONTEND pipeline succeeded — ems-frontend on :3000" }
+        failure { echo "❌ FRONTEND pipeline failed — check the logs above." }
+    }
+}

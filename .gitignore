@@ -5,9 +5,11 @@ terraform/**/*.tfstate
 terraform/**/*.tfstate.*
 terraform/**/terraform.tfvars
 terraform/**/*.plan
+submission/terraform/**/terraform.tfvars
 
 # AWS
 .aws/
+*.pem
 
 # Node
 node_modules/

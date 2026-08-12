@@ -1,0 +1,67 @@
+// -----------------------------------------------------------------------------
+// Jenkinsfile — Employee Management BACKEND (Flask API)
+// Repo:     https://github.com/<owner>/employee-management-backend
+// Trigger:  GitHub webhook on every push to main
+// Stages:   Checkout -> Install deps -> Test (pytest) -> Deploy -> Smoke test
+// -----------------------------------------------------------------------------
+pipeline {
+    agent any
+
+    environment {
+        APP_DIR  = "${env.APP_DIR ?: '/home/ubuntu/ems/backend'}"
+        VENV_DIR = "${env.VENV_DIR ?: '/opt/ems-venv'}"
+        SERVICE  = "ems-backend"
+    }
+
+    options {
+        timestamps()
+        timeout(time: 15, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install dependencies') {
+            steps {
+                sh '''
+                    python3 -m venv ${VENV_DIR}
+                    ${VENV_DIR}/bin/pip install --upgrade pip wheel
+                    ${VENV_DIR}/bin/pip install -r requirements-dev.txt
+                '''
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'cd ${WORKSPACE} && ${VENV_DIR}/bin/python -m pytest tests -v'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                    export APP_DIR=${APP_DIR}
+                    export VENV_DIR=${VENV_DIR}
+                    export WORKSPACE=${WORKSPACE}
+                    bash ${WORKSPACE}/deploy.sh
+                '''
+            }
+        }
+
+        stage('Smoke test') {
+            steps {
+                sh 'curl -sf http://localhost:5000/api/health'
+            }
+        }
+    }
+
+    post {
+        success { echo "✅ BACKEND pipeline succeeded — ems-backend on :5000" }
+        failure { echo "❌ BACKEND pipeline failed — check the logs above." }
+    }
+}

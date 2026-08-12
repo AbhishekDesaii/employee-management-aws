@@ -25,15 +25,9 @@ app.use((req, res) => {
   });
 });
 
-function createServer(port = PORT) {
-  return app.listen(port, () => {
-    console.log(`Frontend server running on port ${port}`);
-    console.log(`API Base URL: ${API_BASE_URL}`);
-  });
-}
+app.listen(PORT, () => {
+  console.log(`Frontend server running on port ${PORT}`);
+  console.log(`API Base URL: ${API_BASE_URL}`);
+});
 
-if (require.main === module) {
-  createServer();
-}
-
-module.exports = { app, createServer };
+module.exports = app;

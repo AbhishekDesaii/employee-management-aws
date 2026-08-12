@@ -1,0 +1,19 @@
+LIVE VERIFICATION (curl) - PART 2: TWO SEPARATE EC2
+Backend : http://54.145.187.40  (Flask :5000)
+Frontend: http://100.63.34.214 (Express :3000)
+Backend private IP used by frontend: 10.0.0.95
+Run : 2026-08-12T14:39:53Z
+
+$ curl -s http://54.145.187.40:5000/api/health   <- BACKEND public (port 5000)
+{"status":"healthy"}
+
+
+$ curl -s http://100.63.34.214:3000/ | grep title  <- FRONTEND (port 3000)
+<title>Home - Employee Management</title>
+
+$ curl -s http://100.63.34.214:3000/dashboard | grep -c 'Alice Johnson'
+  (frontend page that fetches its data OVER THE VPC from backend private IP 10.0.0.95)
+1
+
+$ SSHD check: backend listens on private IP 10.0.0.95
+10.0.0.95

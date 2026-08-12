@@ -1,0 +1,134 @@
+================================================================================
+ DEPLOYMENT EVIDENCE - Employee Management on AWS via Terraform
+==============================================================================
+ Account: 883765745699 (arn:aws:iam::883765745699:user/IT-ADMIN)
+ Region : us-east-1
+ Date   : 2026-08-12
+
+ State   : S3 backend \"employee-management-tfstate-883765745699\" with
+           DynamoDB lock table \"terraform-locks\" (remote, encrypted, locked).
+           terraform state list confirms all resources are tracked remotely.
+
+ All three parts were deployed with a REAL `terraform apply`. Full apply logs:
+   docs/evidence/part1-apply.log   (4 resources added)
+   docs/evidence/part2-apply.log   (5 resources added after partial failure fixed)
+   docs/evidence/part3-apply.log   (39 resources added)
+==============================================================================
+
+=== PART 1 - SINGLE EC2 (Flask + Express on one instance) ===
+----------------------------------------------------------------------------
+ terraform apply output (docs/evidence/part1-apply.log):
+   Apply complete! Resources: 4 added, 0 changed, 0 destroyed.
+   aws_key_pair.this:        employee-management
+   aws_security_group.app:   sg-0090619b08951e0f1
+   aws_instance.this:        i-066109e4c5ce0cb0b
+   aws_eip.this:             eipalloc-0646bde8775db63d8
+
+ Resource IDs:
+   Instance  : i-066109e4c5ce0cb0b
+   Public IP : 34.225.219.173        (Elastic IP, stable)
+   Flask URL : http://34.225.219.173:5000   (health endpoint)
+   Express   : http://34.225.219.173:3000
+
+ Live verification (curl from outside AWS):
+   $ curl -s http://34.225.219.173:5000/api/health
+   {"status":"healthy"}
+
+   $ curl -s http://34.225.219.173:3000/ | grep -o '<title>[^<]*</title>'
+   <title>Home - Employee Management</title>
+
+   $ curl -s http://34.225.219.173:3000/employees | grep -oE 'Alice Johnson|Bob Smith|Carol Williams'
+   Alice Johnson / Bob Smith / Carol Williams   (data pulled from Flask :5000)
+
+ Screenshots: docs/evidence/part1-frontend.png, docs/evidence/part1-employees.png
+
+=== PART 2 - TWO SEPARATE EC2 (dedicated VPC, cross-instance over private IP) ===
+----------------------------------------------------------------------------
+ terraform apply output (docs/evidence/part2-apply.log):
+   Apply complete! Resources: 5 added.
+   VPC created:               vpc-023ea767052b744a6
+   Public subnet:             subnet-08a02b2ee2ed47382
+   Internet gateway:          igw-009ebe4ed831d01bc
+   Backend SG / Frontend SG:  sg-0a1cb6fed51ee0767 / sg-005a0c3a159247551
+
+ Resource IDs:
+   Backend EC2 : i-0441a2bd56c947e40   Public 54.145.187.40  Private 10.0.0.95
+   Frontend EC2: i-041a6cba9d228a72e   Public 100.63.34.214
+   Backend URL : http://54.145.187.40:5000
+   Frontend URL: http://100.63.34.214:3000
+
+ Live verification:
+   Backend public health:
+   $ curl -s http://54.145.187.40:5000/api/health
+   {"status":"healthy"}
+
+   Frontend page (Express :3000):
+   $ curl -s http://100.63.34.214:3000/ | grep -o '<title>[^<]*</title>'
+   <title>Home - Employee Management</title>
+
+   Frontend -> backend over VPC PRIVATE IP (API_BASE_URL=http://10.0.0.95:5000):
+   $ curl -s http://100.63.34.214:3000/dashboard | grep -oE 'Alice Johnson|Bob Smith|Carol Williams'
+   Alice Johnson / Bob Smith / Carol Williams
+
+   Cross-instance connectivity is enforced by SG rule (frontend SG -> backend 5000).
+
+ Screenshots: docs/evidence/part2-frontend-dashboard.png
+
+=== PART 3 - DOCKER CONTAINERS (ECR + ECS Fargate + ALB) ===
+----------------------------------------------------------------------------
+ terraform apply output (docs/evidence/part3-apply.log):
+   Apply complete! Resources: 39 added, 0 changed, 0 destroyed.
+   VPC / 2 AZs / IGW / 2x NAT / private+public subnets / route tables
+   ALB:               employee-alb (arn .../loadbalancer/app/employee-alb/<id>)
+   ECS cluster:       employee-cluster (Fargate, containerInsights enabled)
+   Task defs:         employee-backend, employee-frontend
+   Services:          employee-backend-service, employee-frontend-service
+   ECR repos:         employee-backend, employee-frontend
+   CloudWatch logs:   /ecs/employee-backend, /ecs/employee-frontend
+
+ Images built + pushed (build-and-push.sh):
+   883765745699.dkr.ecr.us-east-1.amazonaws.com/employee-backend:latest
+   883765745699.dkr.ecr.us-east-1.amazonaws.com/employee-frontend:latest
+
+ ALB health - both target groups report 'healthy' (AWS CLI):
+   backend-tg  (Flask :5000): healthy
+   frontend-tg (Express :3000): healthy
+
+ App URL (ALB):
+   http://employee-alb-1009930769.us-east-1.elb.amazonaws.com
+   API        : http://employee-alb-1009930769.us-east-1.elb.amazonaws.com/api/health
+
+ Live verification:
+   $ curl -s http://employee-alb-1009930769.us-east-1.elb.amazonaws.com/api/health
+   {"status":"healthy"}
+
+   $ curl -s http://employee-alb-1009930769.us-east-1.elb.amazonaws.com/ \
+     | grep -o '<title>[^<]*</title>'
+   <title>Home - Employee Management</title>
+
+   $ curl -s http://employee-alb-1009930769.us-east-1.elb.amazonaws.com/employees \
+     | grep -oE 'Alice Johnson|Bob Smith|Carol Williams'
+   Alice Johnson / Bob Smith / Carol Williams
+
+   Full CRUD loop via ALB:
+   POST /api/employees -> created id 4 (Zoe Test)
+   GET  /api/employees -> 4 employees
+   DELETE /api/employees/4 -> {"message":"Employee deleted"}
+
+ Screenshots: docs/evidence/part3-alb-frontend.png, docs/evidence/part3-alb-dashboard.png
+
+================================================================================
+ API RESPONSE SAMPLES (identical health payload on all three parts)
+================================================================================
+ {"status":"healthy"}
+
+ Frontend renders all employees fetched through the Flask API on every part,
+ confirming Flask runs on :5000 and Express on :3000 on AWS.
+
+================================================================================
+ CLEANUP
+================================================================================
+ cd terraform/part1-single-ec2 && terraform destroy -auto-approve
+ cd terraform/part2-separate-ec2 && terraform destroy -auto-approve
+ cd terraform/part3-ecs && terraform destroy -auto-approve
+ (ECR images + S3 state bucket are retained manually if needed)

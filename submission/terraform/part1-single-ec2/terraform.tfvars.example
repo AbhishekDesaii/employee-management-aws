@@ -1,0 +1,20 @@
+# Copy to terraform.tfvars and fill in your values.
+aws_region = "us-east-1"
+name_prefix = "employee"
+
+# Leave empty to use the default VPC/subnet
+# vpc_id    = "vpc-xxxxxxxx"
+# subnet_id = "subnet-xxxxxxxx"
+
+instance_type = "t2.micro"
+key_name      = "employee-management"
+
+# REQUIRED: your SSH public key (starts with "ssh-rsa AAAA...")
+public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQ... your-public-key-here"
+
+ssh_cidr = "0.0.0.0/0"
+
+# REQUIRED: repository containing backend/ and frontend/
+github_repo_url = "https://github.com/AbhishekDesaii/employee-management-aws.git"
+# Only needed for private repositories
+github_token = ""

@@ -1,0 +1,36 @@
+S3 REMOTE STATE - TERRAFORM STATE MANAGEMENT (all three parts)
+Account: 883765745699 | Bucket: employee-management-tfstate-883765745699
+Lock table (DynamoDB): terraform-locks
+Generated: 2026-08-12T14:40:05Z
+
+1) S3 BUCKET CONTENTS (the actual terraform state per part)
+------------------------------------------------------------
+2026-08-12 14:00:37      16864 part1-single-ec2/terraform.tfstate
+2026-08-12 14:06:50      34237 part2-separate-ec2/terraform.tfstate
+2026-08-12 14:12:53      70275 part3-ecs/terraform.tfstate
+
+2) S3 BUCKET VERSIONING + ENCRYPTION
+------------------------------------------------------------
+{
+    "Status": "Enabled"
+}
+{
+    "SSEAlgorithm": "AES256"
+}
+
+3) DYNAMODB LOCK TABLE
+------------------------------------------------------------
+{
+    "Name": "terraform-locks",
+    "Status": "ACTIVE",
+    "Billing": "PAY_PER_REQUEST"
+}
+
+4) terraform state list (proves resources tracked remotely) - PART 1
+------------------------------------------------------------
+data.aws_ami.ubuntu
+data.aws_caller_identity.current
+aws_eip.this
+aws_instance.this
+aws_key_pair.this
+aws_security_group.app

@@ -1,0 +1,18 @@
+LIVE VERIFICATION (curl) - PART 1: SINGLE EC2
+Target: http://34.225.219.173  (Flask :5000, Express :3000)
+Run : 2026-08-12T14:39:47Z
+
+$ curl -s http://34.225.219.173:5000/api/health
+{"status":"healthy"}
+
+
+$ curl -s http://34.225.219.173:5000/api/stats   <- Flask JSON API (port 5000)
+{"avg_salary":86000.0,"total_departments":5,"total_employees":3,"total_projects":4,"total_salary":258000.0}
+
+
+$ curl -s http://34.225.219.173:3000/ | grep title  <- Express page (port 3000)
+<title>Home - Employee Management</title>
+
+$ curl -s http://34.225.219.173:3000/employees | grep -o 'Alice Johnson'  <- rendered via Flask API
+Alice Johnson
+

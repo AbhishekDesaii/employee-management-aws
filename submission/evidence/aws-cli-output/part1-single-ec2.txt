@@ -1,0 +1,23 @@
+AWS CONSOLE VIEW - PART 1: SINGLE EC2 (Flask + Express)
+Account: 883765745699 | Region: us-east-1 | User: IT-ADMIN
+Generated: 2026-08-12
+
+1) EC2 INSTANCES (Name = employee-single-ec2)
+------------------------------------------------------------
+i-066109e4c5ce0cb0b	running	t3.micro	34.225.219.173	employee-management	ebs
+
+2) ELASTIC IP (public IP stays stable)
+------------------------------------------------------------
+34.225.219.173	eipassoc-07e6a8f39adc0b9be	i-066109e4c5ce0cb0b
+
+3) SECURITY GROUP (SSH, Flask 5000, Express 3000)
+------------------------------------------------------------
+Allow SSH, Flask, Express, HTTP for employee app	sg-0090619b08951e0f1	employee-sg
+INGRESS	80	tcp	80
+IPRANGES	0.0.0.0/0	HTTP
+INGRESS	22	tcp	22
+IPRANGES	101.0.62.205/32	SSH
+INGRESS	5000	tcp	5000
+IPRANGES	0.0.0.0/0	Flask API
+INGRESS	3000	tcp	3000
+IPRANGES	0.0.0.0/0	Express frontend
